@@ -33,7 +33,7 @@ All model methods return a Result-like value with:
 Example:
 
 ```ts
-import { Wallet } from "kromer";
+import { Wallet } from "jskromer";
 
 const wallet = await Wallet.fromPrivateKey(process.env.PRIVATE_KEY!);
 if (!wallet.ok()) throw new Error(wallet.error());
@@ -200,11 +200,11 @@ Many list methods accept `Partial<Pagination>`:
 Send a transaction with structured metadata:
 
 ```ts
-import { Transaction } from "kromer";
+import { Transaction } from "jskromer";
 
 const res = await Transaction.create(
   process.env.PRIVATE_KEY!,
-  "kpq5eeqtym", // address or Wallet or { privateKey }
+  "...", // privateKey or Wallet or { privateKey }
   5,
   { order: { id: 123, items: ["a", "b"] }, message: "thanks" }
 );
@@ -215,7 +215,7 @@ console.log("tx id:", res.id);
 Subscribe to live transactions:
 
 ```ts
-import { WS } from "kromer";
+import { WS } from "jskromer";
 const ws = await WS.connect(process.env.PRIVATE_KEY!);
 ws.on("open", () => ws.subscribe("transactions"));
 ws.on("transaction", (tx) => console.log("tx", tx.id, tx.metadata.json()));
@@ -224,7 +224,7 @@ ws.on("transaction", (tx) => console.log("tx", tx.id, tx.metadata.json()));
 Check name availability and register:
 
 ```ts
-import { Name } from "kromer";
+import { Name } from "jskromer";
 
 const available = await Name.isAvailable("example");
 if (!available.ok() || !available)

@@ -1,4 +1,4 @@
-# kromer
+# jskromer
 
 TypeScript SDK for the Kromer Krist-compatible API. It provides typed models, a small Result API, and helpers for HTTP and WebSocket usage.
 
@@ -10,10 +10,10 @@ TypeScript SDK for the Kromer Krist-compatible API. It provides typed models, a 
 
 ```bash
 # choose one
-npm i kromer
-pnpm add kromer
-yarn add kromer
-bun add kromer
+npm i jskromer
+pnpm add jskromer
+yarn add jskromer
+bun add jskromer
 ```
 
 ## Configure endpoint (optional)

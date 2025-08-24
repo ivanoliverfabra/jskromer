@@ -204,7 +204,7 @@ import { Transaction } from "jskromer";
 
 const res = await Transaction.create(
   process.env.PRIVATE_KEY!,
-  "...", // privateKey or Wallet or { privateKey }
+  "kpq5eeqtym", // address or Wallet or { privateKey }
   5,
   { order: { id: 123, items: ["a", "b"] }, message: "thanks" }
 );

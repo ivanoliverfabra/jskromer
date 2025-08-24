@@ -57,6 +57,7 @@ Instance methods
 - `wallet.getTransactions(pagination?: Partial<Pagination>, includeMined = false): Result<Transaction[]>`
 - `wallet.getNames(): Result<Name[]>`
 - `wallet.send(to: WalletResolvable, amount: number, metadata?: MetadataInput): Result<Transaction>`
+- `wallet.getData(): Result<AddressType>`
 
 Static methods
 
@@ -67,7 +68,7 @@ Static methods
 Types
 
 - `type WalletResolvable = string | Wallet | AddressType | { privateKey: string }`
-- `interface AddressType { address; balance; totalin; totalout; firstSeen }`
+- `interface AddressType { address: string; balance: number; totalin: number; totalout: number; firstSeen: Date | string }`
 
 ---
 

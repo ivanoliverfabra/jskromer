@@ -1,6 +1,18 @@
+/** biome-ignore-all lint/suspicious/useAdjacentOverloadSignatures: this is a class */
 import { KROMER_ENDPOINT } from "../constants";
-import { get, mapResult, parseErrorMessage, parsePagination, post, resultErr, resultOk, unwrap, type Pagination, type Result } from "../utils";
-import { type MetadataInput } from "./Metadata";
+import {
+  get,
+  mapResult,
+  type Pagination,
+  parseErrorMessage,
+  parsePagination,
+  post,
+  type Result,
+  resultErr,
+  resultOk,
+  unwrap,
+} from "../utils";
+import type { MetadataInput } from "./Metadata";
 import { Name, type NameType } from "./Name";
 import { Transaction, type TransactionType } from "./Transaction";
 
@@ -12,8 +24,12 @@ export interface AddressType {
   firstSeen: Date | string;
 }
 
-export type WalletResolvable = string | Wallet | AddressType | { privateKey: string; };
-export type PrivateKeyResolvable = string | Wallet | { privateKey: string; };
+export type WalletResolvable =
+  | string
+  | Wallet
+  | AddressType
+  | { privateKey: string };
+export type PrivateKeyResolvable = string | Wallet | { privateKey: string };
 
 export async function resolveWallet(input: WalletResolvable): Promise<Wallet> {
   if (input instanceof Wallet) return input;
@@ -28,7 +44,8 @@ export async function resolveWallet(input: WalletResolvable): Promise<Wallet> {
 
 export function resolvePrivateKey(input: PrivateKeyResolvable): string {
   if (input instanceof Wallet) {
-    if (!input.privateKey) throw new Error("Wallet does not have a private key");
+    if (!input.privateKey)
+      throw new Error("Wallet does not have a private key");
     return input.privateKey;
   }
   if (typeof input === "string") return input;
@@ -40,10 +57,7 @@ export class Wallet {
   public address: string;
   private _privateKey?: string;
 
-  private constructor(
-    address: AddressType | string,
-    privateKey?: string
-  ) {
+  private constructor(address: AddressType | string, privateKey?: string) {
     if (typeof address === "string") this.address = address;
     else this.address = address.address;
 
@@ -61,33 +75,69 @@ export class Wallet {
   }
 
   async getBalance(): Promise<Result<number>> {
-    const res = await get<{ address: { balance: number } }>(`${KROMER_ENDPOINT}/addresses/${this.address}`);
+    const res = await get<{ address: { balance: number } }>(
+      `${KROMER_ENDPOINT}/addresses/${this.address}`,
+    );
     return mapResult(res, (v) => v.address.balance);
   }
 
-  async getTransactions(unsafePagination?: Partial<Pagination>, includeMined = false): Promise<Result<Transaction[]>> {
+  async getTransactions(
+    unsafePagination?: Partial<Pagination>,
+    includeMined = false,
+  ): Promise<Result<Transaction[]>> {
     try {
       const { limit, offset } = parsePagination(unsafePagination);
 
-      const url = new URL(`${KROMER_ENDPOINT}/addresses/${this.address}/transactions`);
-      if (!includeMined) url.searchParams.append('exclude_mined', 'true');
+      const url = new URL(
+        `${KROMER_ENDPOINT}/addresses/${this.address}/transactions`,
+      );
+      if (!includeMined) url.searchParams.append("exclude_mined", "true");
 
-      if (limit) url.searchParams.append('limit', limit.toString());
-      if (offset) url.searchParams.append('offset', offset.toString());
+      if (limit) url.searchParams.append("limit", limit.toString());
+      if (offset) url.searchParams.append("offset", offset.toString());
 
-      const res = await get<{ transactions: TransactionType[] }>(url.toString());
-      return mapResult(res, (v) => v.transactions.map(t => Transaction.from(t)));
+      const res = await get<{ transactions: TransactionType[] }>(
+        url.toString(),
+      );
+      return mapResult(res, (v) =>
+        v.transactions.map((t) => Transaction.from(t)),
+      );
     } catch (e) {
       return resultErr(parseErrorMessage(e));
     }
   }
 
-  async getNames(): Promise<Result<Name[]>> {
-    const res = await get<{ names: NameType[] }>(`${KROMER_ENDPOINT}/addresses/${this.address}/names`);
-    return mapResult(res, (v) => v.names.map(n => Name.from(n)));
+  static async getTransactions(
+    address: string,
+    unsafePagination?: Partial<Pagination>,
+    includeMined = false,
+  ): Promise<Result<Transaction[]>> {
+    const { limit, offset } = parsePagination(unsafePagination);
+
+    const url = new URL(`${KROMER_ENDPOINT}/addresses/${address}/transactions`);
+    if (!includeMined) url.searchParams.append("exclude_mined", "true");
+
+    if (limit) url.searchParams.append("limit", limit.toString());
+    if (offset) url.searchParams.append("offset", offset.toString());
+
+    const res = await get<{ transactions: TransactionType[] }>(url.toString());
+    return mapResult(res, (v) =>
+      v.transactions.map((t) => Transaction.from(t)),
+    );
   }
 
-  async send(to: WalletResolvable, amount: number, metadata?: MetadataInput): Promise<Result<Transaction>> {
+  async getNames(): Promise<Result<Name[]>> {
+    const res = await get<{ names: NameType[] }>(
+      `${KROMER_ENDPOINT}/addresses/${this.address}/names`,
+    );
+    return mapResult(res, (v) => v.names.map((n) => Name.from(n)));
+  }
+
+  async send(
+    to: WalletResolvable,
+    amount: number,
+    metadata?: MetadataInput,
+  ): Promise<Result<Transaction>> {
     return Transaction.create(this, to, amount, metadata);
   }
 
@@ -95,33 +145,39 @@ export class Wallet {
     return this._privateKey;
   }
 
+  async getData(): Promise<Result<AddressType>> {
+    const res = await get<{ address: AddressType }>(
+      `${KROMER_ENDPOINT}/addresses/${this.address}`,
+    );
+    return mapResult(res, (v) => ({
+      ...v.address,
+      firstSeen:
+        typeof v.address.firstSeen === "string"
+          ? new Date(v.address.firstSeen)
+          : v.address.firstSeen,
+    }));
+  }
+
   static from(address: string, privateKey?: string): Wallet {
     return new Wallet(address, privateKey);
   }
 
   static async fromPrivateKey(privateKey: string): Promise<Result<Wallet>> {
-    const res = await post<{ authed: boolean; address: string | null }>(`${KROMER_ENDPOINT}/login`, { privatekey: privateKey });
+    const res = await post<{ authed: boolean; address: string | null }>(
+      `${KROMER_ENDPOINT}/login`,
+      { privatekey: privateKey },
+    );
     if (!res.ok) return resultErr(res.error);
-    if (!res.value.authed || !res.value.address) return resultErr("Invalid private key");
+    if (!res.value.authed || !res.value.address)
+      return resultErr("Invalid private key");
     return resultOk(new Wallet(res.value.address, privateKey));
   }
 
-  static async getTransactions(address: string, unsafePagination?: Partial<Pagination>, includeMined = false): Promise<Result<Transaction[]>> {
-    const { limit, offset } = parsePagination(unsafePagination);
-
-    const url = new URL(`${KROMER_ENDPOINT}/addresses/${address}/transactions`);
-    if (!includeMined) url.searchParams.append('exclude_mined', 'true');
-
-    if (limit) url.searchParams.append('limit', limit.toString());
-    if (offset) url.searchParams.append('offset', offset.toString());
-
-    const res = await get<{ transactions: TransactionType[] }>(url.toString());
-    return mapResult(res, (v) => v.transactions.map(t => Transaction.from(t)));
-  }
-
   static async getNames(address: string): Promise<Result<Name[]>> {
-    const res = await get<{ names: NameType[] }>(`${KROMER_ENDPOINT}/addresses/${address}/names`);
-    return mapResult(res, (v) => v.names.map(n => Name.from(n)));
+    const res = await get<{ names: NameType[] }>(
+      `${KROMER_ENDPOINT}/addresses/${address}/names`,
+    );
+    return mapResult(res, (v) => v.names.map((n) => Name.from(n)));
   }
 
   static async create(privateKey: string): Promise<Result<Wallet>> {
@@ -129,16 +185,30 @@ export class Wallet {
     return Wallet.fromPrivateKey(privateKey);
   }
 
-  static async lookup(addresses: string[], includeNames = false): Promise<Result<{ found: number; notFound: number; addresses: Record<string, Wallet> }>> {
+  static async lookup(
+    addresses: string[],
+    includeNames = false,
+  ): Promise<
+    Result<{
+      found: number;
+      notFound: number;
+      addresses: Record<string, Wallet>;
+    }>
+  > {
     try {
-      if (!addresses.length) return resultOk({ found: 0, notFound: 0, addresses: {} });
+      if (!addresses.length)
+        return resultOk({ found: 0, notFound: 0, addresses: {} });
 
-      const url = new URL(`${KROMER_ENDPOINT}/lookup/addresses/${addresses.map(a => encodeURIComponent(a)).join(",")}`);
-      if (includeNames) url.searchParams.append('fetch_names', 'true');
-
-      const res = await get<{ found: number; notFound: number; addresses: Record<string, AddressType> }>(
-        url.toString()
+      const url = new URL(
+        `${KROMER_ENDPOINT}/lookup/addresses/${addresses.map((a) => encodeURIComponent(a)).join(",")}`,
       );
+      if (includeNames) url.searchParams.append("fetch_names", "true");
+
+      const res = await get<{
+        found: number;
+        notFound: number;
+        addresses: Record<string, AddressType>;
+      }>(url.toString());
 
       if (!res.ok) return resultErr(res.error);
 
@@ -150,7 +220,7 @@ export class Wallet {
       return resultOk({
         found: res.value.found,
         notFound: res.value.notFound,
-        addresses: wallets
+        addresses: wallets,
       });
     } catch (e) {
       return resultErr(parseErrorMessage(e));

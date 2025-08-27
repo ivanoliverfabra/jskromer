@@ -117,7 +117,7 @@ export class WS {
 	}
 
 	static async connect(
-		privateKeyOrUrl: PrivateKeyResolvable | string,
+		privateKeyOrUrl?: PrivateKeyResolvable | string,
 		options?: WSOptions,
 	): Promise<WS> {
 		const isUrl =
@@ -141,7 +141,7 @@ export class WS {
 
 		try {
 			this.ws?.close();
-		} catch {}
+		} catch { }
 
 		const ws: WebSocketLike = new Ctor(this.url, this.opts.protocols);
 		this.ws = ws;

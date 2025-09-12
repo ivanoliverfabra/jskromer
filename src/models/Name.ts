@@ -128,7 +128,6 @@ export class Name implements NameType {
 
 	static async register(
 		name: string,
-		_a: string,
 		unresolvedKey: PrivateKeyResolvable,
 	): Promise<Result<Name>> {
 		try {

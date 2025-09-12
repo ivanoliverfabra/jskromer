@@ -2,7 +2,7 @@
 	"name": "jskromer",
 	"description": "TypeScript SDK for interacting with the Kromer blockchain. Provides typed models, a lightweight Result API, and helpers for HTTP and WebSocket usage.",
 	"type": "module",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",

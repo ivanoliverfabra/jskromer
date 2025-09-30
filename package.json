@@ -69,6 +69,6 @@
 	"homepage": "https://github.com/ivanoliverfabra/kromerjs#readme",
 	"dependencies": {
 		"@noble/hashes": "^2.0.1",
-		"xms-ts": "^1.0.4"
+		"xms-ts": "^1.0.5"
 	}
 }

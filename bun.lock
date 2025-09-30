@@ -3,6 +3,9 @@
   "workspaces": {
     "": {
       "name": "kromer",
+      "dependencies": {
+        "xms-ts": "1.0.4",
+      },
       "devDependencies": {
         "@biomejs/biome": "2.2.2",
         "@types/bun": "latest",
@@ -104,6 +107,8 @@
     "undici-types": ["undici-types@7.10.0", "", {}, "sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag=="],
 
     "wrap-ansi": ["wrap-ansi@7.0.0", "", { "dependencies": { "ansi-styles": "^4.0.0", "string-width": "^4.1.0", "strip-ansi": "^6.0.0" } }, "sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q=="],
+
+    "xms-ts": ["xms-ts@1.0.4", "", { "peerDependencies": { "typescript": "^5.0.0" } }, "sha512-x1UY1Ak/JRok3vA7KzUnmUZ9SfS37EQnBWQmFG8Ap7NdwUhcD7hXc8+mofi7saKvGUaLatpqHqWXf0Gc0PQOAg=="],
 
     "y18n": ["y18n@5.0.8", "", {}, "sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA=="],
 

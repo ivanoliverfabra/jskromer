@@ -66,5 +66,8 @@
 	"bugs": {
 		"url": "https://github.com/ivanoliverfabra/kromerjs/issues"
 	},
-	"homepage": "https://github.com/ivanoliverfabra/kromerjs#readme"
+	"homepage": "https://github.com/ivanoliverfabra/kromerjs#readme",
+	"dependencies": {
+		"xms-ts": "^1.0.4"
+	}
 }

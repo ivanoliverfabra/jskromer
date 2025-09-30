@@ -72,7 +72,7 @@ export interface Pagination {
 }
 
 // New Result API: a Result-like object that behaves like its value, with ok()/error() methods
-export type ResultLike<T> = T & { ok(): boolean; error(): string | undefined };
+export type ResultLike<T> = T & { ok(): boolean; error(): string | undefined; unwrap(): T };
 export type Result<T> = ResultLike<T>;
 
 function makeProxy<T>(value: T, ok: boolean, error?: string): ResultLike<T> {
@@ -83,6 +83,7 @@ function makeProxy<T>(value: T, ok: boolean, error?: string): ResultLike<T> {
 		get(t, p, r) {
 			if (p === "ok") return () => meta._ok;
 			if (p === "error") return () => meta._error;
+			if (p === "unwrap") return () => value;
 			if (p === Symbol.toPrimitive) {
 				return (_hint: string) => {
 					if (typeof value === "object" && value !== null) return value;

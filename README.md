@@ -3,7 +3,7 @@
 TypeScript SDK for the Kromer Krist-compatible API. It provides typed models, a small Result API, and helpers for HTTP and WebSocket usage.
 
 - Models: `Wallet`, `Transaction`, `Name`, `Metadata`, `Misc`, `WS`
-- Utilities: lightweight Result-like pattern with `ok()` and `error()`
+- Utilities: lightweight Result-like pattern with `ok()` and `error()`, plus `unwrap()` helper and v2 address generation
 - ESM-first (works in Bun/Node) with generated types
 
 ## Install
@@ -18,9 +18,11 @@ bun add jskromer
 
 ## Configure endpoint (optional)
 
-Set the base server via environment variable (defaults to `https://kromer.reconnected.cc`).
+Set the base server via environment variables (defaults to `https://kromer.reconnected.cc/api/krist`).
 
-- `KROMER_URL=https://your.domain` → requests go to `${KROMER_URL}/api/krist`.
+- `KROMER_URL=https://your.domain` → sets the base URL (defaults to `https://kromer.reconnected.cc`)
+- `KROMER_API_BASE_PATH=/custom/path` → sets the API path (defaults to `/api/krist`)
+- Final endpoint: `${KROMER_URL}${KROMER_API_BASE_PATH}`
 
 ## Result API in a nutshell
 
@@ -42,11 +44,38 @@ console.log(wallet.address);
 
 ---
 
+## Utilities
+
+Core utilities exported by the SDK:
+
+- `unwrap<T>(result: T & { ok(): boolean; error(): string | undefined }): T` → extracts value from Result-like objects, throws on error
+- `generateAddressV2(privateKey: string, prefix = "k"): string` → generates a v2-format Krist address from a private key
+
+Example:
+
+```ts
+import { generateAddressV2, unwrap, Wallet } from "jskromer";
+
+// Generate address from private key
+const address = generateAddressV2("your-private-key-here");
+console.log(address); // e.g., "k1a2b3c4d5e6f7g8h"
+
+// Use unwrap to extract values without manual error checking
+const wallet = unwrap(await Wallet.fromPrivateKey(privateKey));
+console.log(wallet.address); // throws if wallet creation failed
+
+// You can also unwrap from Result-Like object
+const wallet = (await Wallet.fromPrivateKey(privateKey)).unwrap();
+```
+
+---
+
 ## Wallet
 
 Create/resolve
 
 - `Wallet.from(address: string, privateKey?: string)` → construct a Wallet instance
+- `Wallet.fromAddress(address: string): Result<Wallet>`
 - `Wallet.fromPrivateKey(privateKey: string): Result<Wallet>`
 - `resolveWallet(input: string | Wallet | { privateKey: string } | AddressType): Promise<Wallet>`
 - `resolvePrivateKey(input: string | Wallet | { privateKey: string }): string`
@@ -54,10 +83,12 @@ Create/resolve
 Instance methods
 
 - `wallet.getBalance(): Result<number>`
+- `wallet.authenticate(privateKey: string): Result<boolean>` (attach private key to a Wallet created from address only)
 - `wallet.getTransactions(pagination?: Partial<Pagination>, includeMined = false): Result<Transaction[]>`
 - `wallet.getNames(): Result<Name[]>`
 - `wallet.send(to: WalletResolvable, amount: number, metadata?: MetadataInput): Result<Transaction>`
-- `wallet.getData(): Result<AddressType>`
+- `wallet.getData(): Result<AddressType>` (DEPRECATED, use `Wallet` properties instead)
+- `wallet.refresh(): Promise<void>` (refreshes balance and data)
 
 Static methods
 
@@ -201,16 +232,26 @@ Many list methods accept `Partial<Pagination>`:
 Send a transaction with structured metadata:
 
 ```ts
-import { Transaction } from "jskromer";
+import { Transaction, unwrap } from "jskromer";
 
+// Option 1: Manual error checking
 const res = await Transaction.create(
   process.env.PRIVATE_KEY!,
   "kpq5eeqtym", // address or Wallet or { privateKey }
   5,
   { order: { id: 123, items: ["a", "b"] }, message: "thanks" }
 );
-if (!res.ok()) throw new Error(res.error()); // optional
+if (!res.ok()) throw new Error(res.error());
 console.log("tx id:", res.id);
+
+// Option 2: Using unwrap helper
+const tx = unwrap(
+  await Transaction.create(process.env.PRIVATE_KEY!, "kpq5eeqtym", 5, {
+    order: { id: 123, items: ["a", "b"] },
+    message: "thanks",
+  })
+);
+console.log("tx id:", tx.id);
 ```
 
 Subscribe to live transactions:
@@ -225,21 +266,34 @@ ws.on("transaction", (tx) => console.log("tx", tx.id, tx.metadata.json()));
 Check name availability and register:
 
 ```ts
-import { Name } from "jskromer";
+import { Name, unwrap } from "jskromer";
 
-const available = await Name.isAvailable("example");
-if (!available.ok() || !available)
-  throw new Error("check failed or not available");
+const available = unwrap(await Name.isAvailable("example"));
+if (!available) throw new Error("name not available");
 
-const reg = await Name.register("example", process.env.PRIVATE_KEY!);
-if (!reg.ok()) throw new Error(reg.error());
+const reg = unwrap(await Name.register("example", process.env.PRIVATE_KEY!));
 console.log("registered to:", reg.owner);
+```
+
+Generate addresses from private keys:
+
+```ts
+import { generateAddressV2, Wallet } from "jskromer";
+
+// Generate v2 address directly
+const address = generateAddressV2(process.env.PRIVATE_KEY!);
+console.log("Address:", address);
+
+// Or use Wallet.from for more features
+const wallet = await Wallet.from(address, process.env.PRIVATE_KEY!);
+console.log("Balance:", unwrap(await wallet.getBalance()));
 ```
 
 ---
 
 ## Notes
 
-- All methods are Promise-based and typed. Always check `ok()` before using the value.
+- All methods are Promise-based and typed. Always check `ok()` before using the value, or use `unwrap()` for automatic error throwing.
 - Errors are stringified consistently via `error()`.
 - WebSocket reconnection is enabled by default; call `ws.close()` to stop.
+- The `generateAddressV2` function implements the v2 address generation algorithm compatible with Kromer.

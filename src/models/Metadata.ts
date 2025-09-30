@@ -10,8 +10,8 @@ import {
 export type MetadataInput =
 	| ValidXMSPrimitive
 	| Record<string, any>
-	| Metadata<any>
-	| undefined;
+	| undefined
+	| XMSDocument['data']
 
 export type InferCombined<L extends Record<string, any>, R extends Record<string, any>> = {
 	[K in keyof L | keyof R]: K extends keyof R
@@ -49,7 +49,7 @@ export class Metadata<T extends Record<string, any> = Record<string, any>> {
 		if (input instanceof Metadata) return input;
 
 		if (typeof input === "string") {
-			return new Metadata(XMSDoc.parse(input));
+			return new Metadata(XMSDoc.parse(input, false));
 		}
 
 		if (input && typeof input === "object") {

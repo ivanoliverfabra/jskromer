@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: <> */
 import { KROMER_ENDPOINT } from "../constants";
 import {
 	get,
@@ -31,14 +32,14 @@ export interface TransactionType {
 	type: string;
 }
 
-export class Transaction {
+export class Transaction<D extends Record<string, any> = Record<string, any>> {
 	id: number;
 	from: Wallet;
 	to: Wallet;
 	value: number;
 	time: Date;
 	name: string;
-	metadata: Metadata;
+	metadata: Metadata<D>;
 	sent_metaname: string;
 	sent_name: string;
 	type: string;
@@ -50,7 +51,7 @@ export class Transaction {
 		this.value = data.value;
 		this.time = new Date(data.time);
 		this.name = data.name;
-		this.metadata = Metadata.from(data.metadata);
+		this.metadata = Metadata.from(data.metadata) as Metadata<D>;
 		this.sent_metaname = data.sent_metaname;
 		this.sent_name = data.sent_name;
 		this.type = data.type;
@@ -64,7 +65,7 @@ export class Transaction {
 			value: this.value,
 			time: this.time,
 			name: this.name,
-			metadata: this.metadata.text(),
+			metadata: this.metadata.toString(),
 			sent_metaname: this.sent_metaname,
 			sent_name: this.sent_name,
 			type: this.type,
@@ -103,7 +104,7 @@ export class Transaction {
 					privatekey: privateKey,
 					to: recipient.address,
 					amount,
-					metadata: meta.text(),
+					metadata: meta.toString(),
 				},
 			);
 			return mapResult(res, (v) => new Transaction(v.transaction));
@@ -112,11 +113,11 @@ export class Transaction {
 		}
 	}
 
-	static async get(id: number): Promise<Result<Transaction>> {
+	static async get<D extends Record<string, any>>(id: number): Promise<Result<Transaction<D>>> {
 		const res = await get<{ transaction: TransactionType }>(
 			`${KROMER_ENDPOINT}/transactions/${id}`,
 		);
-		return mapResult(res, (v) => new Transaction(v.transaction));
+		return mapResult(res, (v) => new Transaction<D>(v.transaction));
 	}
 
 	static async list(

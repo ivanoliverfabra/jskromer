@@ -5,6 +5,7 @@
       "name": "kromer",
       "dependencies": {
         "@noble/hashes": "^2.0.1",
+        "jskromer": "^0.0.9",
         "xms-ts": "^1.0.5",
       },
       "devDependencies": {
@@ -96,6 +97,8 @@
     "get-tsconfig": ["get-tsconfig@4.10.1", "", { "dependencies": { "resolve-pkg-maps": "^1.0.0" } }, "sha512-auHyJ4AgMz7vgS8Hp3N6HXSmlMdUyhSUrfBF16w153rxtLIEOE+HGqaBppczZvnHLqQJfiHotCYpNhl0lUROFQ=="],
 
     "is-fullwidth-code-point": ["is-fullwidth-code-point@3.0.0", "", {}, "sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg=="],
+
+    "jskromer": ["jskromer@0.0.9", "", { "dependencies": { "@noble/hashes": "^2.0.1", "xms-ts": "^1.0.5" }, "peerDependencies": { "typescript": "^5" } }, "sha512-LaeyuI5o4/mLPoc5HpDmMlVaw/et6qD/qSvrW/e1dJB/JvvHyZBx8gs6tZ6U0L9JJPXWJi7PE40HimU1UGuuJQ=="],
 
     "require-directory": ["require-directory@2.1.1", "", {}, "sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q=="],
 

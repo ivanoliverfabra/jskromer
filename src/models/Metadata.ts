@@ -1,17 +1,15 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: utility file */
 
 import {
-	type ParseXMS,
-	type ValidXMSPrimitive,
+	type InferXMS,
 	XMSDoc,
-	type XMSDocument,
-} from "xms-ts";
+	type XMSNode,
+	type XMSParsedLikeGeneric,
+	type XMSParseOptions,
+	type XMSValue
+} from "openxms";
 
-export type MetadataInput =
-	| ValidXMSPrimitive
-	| Record<string, any>
-	| undefined
-	| XMSDocument['data']
+export type MetadataInput = XMSValue | Record<string, any> | Metadata<any>;
 
 export type InferCombined<L extends Record<string, any>, R extends Record<string, any>> = {
 	[K in keyof L | keyof R]: K extends keyof R
@@ -34,29 +32,31 @@ export type InferCombined<L extends Record<string, any>, R extends Record<string
  * const metadata = Metadata.from({ key: "value" });
  * ```
  */
-export class Metadata<T extends Record<string, any> = Record<string, any>> {
-	private _doc: XMSDoc<XMSDocument<T>>;
+export class Metadata<T extends XMSNode = XMSNode, O extends XMSParseOptions = XMSParseOptions> {
+	private _doc: XMSDoc<T, O>;
 
-	private constructor(doc: XMSDoc<XMSDocument<T>>) {
+	private constructor(doc: XMSDoc<T, O>) {
 		this._doc = doc;
 	}
 
-	static from<const S extends string>(input: S): Metadata<ParseXMS<S>["data"]>;
-	static from<T extends Record<string, any>>(input: T): Metadata<T>;
-	static from<M extends Metadata<any>>(input: M): M;
-	static from(input: MetadataInput): Metadata<any>;
-	static from(input: MetadataInput): Metadata<any> {
+	static from<const S extends string, O extends XMSParseOptions>(input: S, opts?: O): Metadata<InferXMS<S, O>, O>;
+	static from<T extends XMSNode, O extends XMSParseOptions>(input: T, opts?: O): Metadata<T, O>;
+	static from<M extends Metadata<any>, O extends XMSParseOptions>(input: M, opts?: O): M;
+	static from(input?: MetadataInput, opts?: XMSParseOptions): Metadata<any>;
+	static from(input?: MetadataInput, opts?: XMSParseOptions): Metadata<any> {
+		if (!input) return new Metadata(XMSDoc.parse("") as any);
+
 		if (input instanceof Metadata) return input;
 
 		if (typeof input === "string") {
-			return new Metadata(XMSDoc.parse(input, false));
+			return new Metadata(XMSDoc.parse(input, opts)) as any;
 		}
 
 		if (input && typeof input === "object") {
-			return new Metadata(XMSDoc.from(input as Record<string, any>, 1, false));
+			return new Metadata(XMSDoc.from(input as XMSParsedLikeGeneric, opts) as any);
 		}
 
-		return new Metadata(XMSDoc.parse("xms/1;"));
+		return new Metadata(XMSDoc.parse("xms/1;") as any);
 	}
 
 	/**
@@ -64,8 +64,8 @@ export class Metadata<T extends Record<string, any> = Record<string, any>> {
 	 * @param raw The raw metadata string.
 	 * @returns The Metadata instance.
 	 */
-	static fromRaw<T extends Record<string, any>>(raw: string): Metadata<T> {
-		return new Metadata(XMSDoc.parse<T>(raw)) as Metadata<T>;
+	static fromRaw<T extends XMSNode = XMSNode>(raw: string): Metadata<T> {
+		return new Metadata(XMSDoc.parse(raw)) as any;
 	}
 
 	/**
@@ -73,8 +73,8 @@ export class Metadata<T extends Record<string, any> = Record<string, any>> {
 	 * @param json The JSON object.
 	 * @returns The Metadata instance.
 	 */
-	static fromJson<T extends Record<string, any>>(json: T): Metadata<T> {
-		return new Metadata(XMSDoc.from<T>(json)) as Metadata<T>;
+	static fromJson<T extends XMSNode>(json: T): Metadata<T> {
+		return new Metadata(XMSDoc.from(json) as any) as any;
 	}
 
 	/**
@@ -83,7 +83,7 @@ export class Metadata<T extends Record<string, any> = Record<string, any>> {
 	 * @deprecated Use `toString()` instead.
 	 */
 	raw(): string {
-		return this._doc.toString();
+		return this._doc.toXMS();
 	}
 
 	/**
@@ -91,7 +91,7 @@ export class Metadata<T extends Record<string, any> = Record<string, any>> {
 	 * @returns The raw metadata string.
 	 */
 	toString(): string {
-		return this._doc.toString();
+		return this._doc.toXMS();
 	}
 
 	/**
@@ -134,29 +134,32 @@ export class Metadata<T extends Record<string, any> = Record<string, any>> {
 	 * @returns The combined metadata object.
 	 */
 	static combine<
-		L extends Record<string, any>,
-		R extends Record<string, any>
+		L extends XMSNode = XMSNode,
+		R extends XMSNode = XMSNode
 	>(
 		left: L | Metadata<L>,
 		right: R | Metadata<R>,
 		opts?: { prefer?: "left" | "right" }
-	): Metadata<L & R> {
-		const l = Metadata.from<L>(left instanceof Metadata ? left._doc.data : left)._doc;
-		const r = Metadata.from<R>(right instanceof Metadata ? right._doc.data : right)._doc;
+	): Metadata<any> {
+		const l = Metadata.from(left instanceof Metadata ? left._doc.data : left)._doc;
+		const r = Metadata.from(right instanceof Metadata ? right._doc.data : right)._doc;
+
+		const lData = l.data as any;
+		const rData = r.data as any;
 
 		const data =
 			opts?.prefer === "left"
-				? { ...r.data, ...l.data } as any
-				: { ...l.data, ...r.data } as any;
+				? { ...rData, ...lData }
+				: { ...lData, ...rData };
 
-		return new Metadata(XMSDoc.from<InferCombined<L, R>>(data) as any) as Metadata<L & R>;
+		return new Metadata(XMSDoc.from(data) as any) as any;
 	}
 
 	/**
 	 * Returns the underlying XMSDoc instance.
 	 * @returns The underlying XMSDoc instance.
 	 */
-	get doc(): XMSDoc<XMSDocument<T>> {
-		return this._doc;
+	get doc(): XMSDoc<T> {
+		return this._doc as any;
 	}
 }

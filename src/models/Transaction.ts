@@ -1,4 +1,5 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: <> */
+import type { XMSNode, XMSParseOptions } from "openxms";
 import { KROMER_ENDPOINT } from "../constants";
 import {
 	get,
@@ -32,14 +33,14 @@ export interface TransactionType {
 	type: string;
 }
 
-export class Transaction<D extends Record<string, any> = Record<string, any>> {
+export class Transaction<D extends XMSNode = XMSNode, O extends XMSParseOptions = XMSParseOptions> {
 	id: number;
 	from: Wallet;
 	to: Wallet;
 	value: number;
 	time: Date;
 	name: string;
-	metadata: Metadata<D>;
+	metadata: Metadata<D, O>;
 	sent_metaname: string;
 	sent_name: string;
 	type: string;
@@ -78,7 +79,7 @@ export class Transaction<D extends Record<string, any> = Record<string, any>> {
 
 	withMetadata(meta: MetadataInput): Transaction {
 		const copy = new Transaction(this.toJSON());
-		copy.metadata = Metadata.from(meta);
+		copy.metadata = Metadata.from<any, O>(meta);
 		return copy;
 	}
 
@@ -113,11 +114,11 @@ export class Transaction<D extends Record<string, any> = Record<string, any>> {
 		}
 	}
 
-	static async get<D extends Record<string, any>>(id: number): Promise<Result<Transaction<D>>> {
+	static async get<D extends XMSNode = XMSNode, O extends XMSParseOptions = XMSParseOptions>(id: number): Promise<Result<Transaction<D, O>>> {
 		const res = await get<{ transaction: TransactionType }>(
 			`${KROMER_ENDPOINT}/transactions/${id}`,
 		);
-		return mapResult(res, (v) => new Transaction<D>(v.transaction));
+		return mapResult(res, (v) => new Transaction<D, O>(v.transaction));
 	}
 
 	static async list(
